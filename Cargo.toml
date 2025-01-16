@@ -1,0 +1,36 @@
+[package]
+name = "provenance-mark-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Provenance Marks Command Line Tool."
+authors = ["Blockchain Commons"]
+repository = "https://github.com/BlockchainCommons/bc-provenance-mark-cli-rust"
+readme = "README.md"
+license = "BSD-2-Clause-Patent"
+documentation = "https://docs.rs/bc-provenance-mark-cli"
+keywords = ["provenance", "copyright", "blockchain"] # Up to five
+categories = ["authentication", "command-line-utilities"] # https://crates.io/category_slugs
+
+[[bin]]
+name = "provenance"
+path = "src/main.rs"
+
+[dependencies]
+provenance-mark = "0.1.2"
+dcbor = "^0.16.0"
+bc-ur = "^0.6.0"
+bc-envelope = "^0.21.0"
+bc-components = "^0.15.0"
+bc-rand = "^0.2.1"
+
+clap = { version = "^4.4.3", features = ["derive", "unstable-styles"] }
+anyhow = "^1.0.0"
+anstyle = "^1.0.1"
+hex = "^0.4.3"
+regex = "^1.9.5"
+rpassword = "7.3.1"
+glob = "0.3.2"
+
+[dev-dependencies]
+assert_cmd = "^2.0.12"
+indoc = "^2.0.0"
