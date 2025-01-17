@@ -5,7 +5,7 @@ use anyhow::{ bail, Result };
 use bc_envelope::prelude::*;
 use glob::glob;
 
-/// Utility function to read a new path, supporting globbing, and resolving relative paths.
+/// Read a new path, supporting globbing, and resolving relative paths.
 pub fn read_new_path(path: &PathBuf) -> Result<PathBuf> {
     let mut matches = glob(path.to_str().unwrap_or(""))?
         .filter_map(|entry| entry.ok())
@@ -28,6 +28,15 @@ pub fn read_new_path(path: &PathBuf) -> Result<PathBuf> {
 
     let cleaned_path = effective_path.components().collect::<PathBuf>();
     Ok(cleaned_path)
+}
+
+/// Read an existing directory path, supporting globbing, and resolving relative paths.
+pub fn read_existing_directory_path(path: &PathBuf) -> Result<PathBuf> {
+    let effective_path = read_new_path(path)?;
+    if !effective_path.is_dir() {
+        bail!("Path is not a directory: {:?}", effective_path);
+    }
+    Ok(effective_path)
 }
 
 pub fn read_password(prompt: &str, password: Option<&str>) -> Result<String> {
