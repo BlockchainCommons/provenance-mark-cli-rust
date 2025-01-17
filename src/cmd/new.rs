@@ -3,7 +3,10 @@ use std::{ fs, path::PathBuf };
 use bc_envelope::prelude::*;
 use clap::{ Args, ValueEnum };
 use anyhow::{ bail, Result };
-use provenance_mark::{ ProvenanceMarkGenerator, ProvenanceMarkInfo, ProvenanceMarkResolution };
+use dcbor::Date;
+use provenance_mark::{
+    util::{parse_seed, parse_date}, ProvenanceMarkGenerator, ProvenanceMarkInfo, ProvenanceMarkResolution, ProvenanceSeed
+};
 
 use crate::utils::read_new_path;
 
@@ -14,6 +17,12 @@ pub struct CommandArgs {
     /// Path to directory to be created. Must not already exist.
     path: PathBuf,
 
+    /// A seed to use for the provenance mark chain, encoded as base64.
+    /// If not supplied, a random seed is generated.
+    #[arg(short, long)]
+    #[clap(value_parser = parse_seed)]
+    seed: Option<ProvenanceSeed>,
+
     /// The resolution of the provenance mark chain.
     #[arg(short, long, default_value = "quartile")]
     resolution: Resolution,
@@ -22,6 +31,11 @@ pub struct CommandArgs {
     /// the mark itself.)
     #[arg(short, long, default_value = "Genesis mark.")]
     comment: String,
+
+    /// The date of the genesis mark. If not supplied, the current date is used.
+    #[arg(short, long)]
+    #[clap(value_parser = parse_date)]
+    date: Option<Date>,
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
@@ -56,13 +70,21 @@ impl crate::exec::Exec for CommandArgs {
         let marks_path = path.join("marks");
         fs::create_dir(&marks_path)?;
 
-        // Create the generator
-        let mut generator = ProvenanceMarkGenerator::new_random(
-            self.resolution.as_provenance_mark_resolution()
-        );
+        let mut generator: ProvenanceMarkGenerator =
+        if let Some(seed) = self.seed.clone() {
+            ProvenanceMarkGenerator::new_with_seed(
+                self.resolution.as_provenance_mark_resolution(),
+                seed
+            )
+        } else {
+            ProvenanceMarkGenerator::new_random(
+                self.resolution.as_provenance_mark_resolution()
+            )
+        };
 
         // Generate the genesis mark.
-        let mark = generator.next(dcbor::Date::now(), None::<CBOR>);
+        let date = self.date.clone().unwrap_or_else(dcbor::Date::now);
+        let mark = generator.next(date, None::<CBOR>);
         let mark_info = ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
 
         // Serialize the mark to JSON and write it as `mark-seq.json` to

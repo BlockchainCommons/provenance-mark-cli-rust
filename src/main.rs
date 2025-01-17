@@ -52,3 +52,16 @@ fn main() -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use provenance_mark::ProvenanceSeed;
+    use serde_json::json;
+
+    #[test]
+    fn test1() {
+        let seed_str = "Jgk3vBEDvOjpQtjGDLu3kNQpIEPwg+HDNCL32dvFAS0=";
+        let seed: ProvenanceSeed = serde_json::from_value(json!(seed_str)).unwrap();
+        println!("{:?}", seed);
+    }
+}

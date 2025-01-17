@@ -16,7 +16,7 @@ name = "provenance"
 path = "src/main.rs"
 
 [dependencies]
-provenance-mark = "0.1.2"
+provenance-mark = "0.3.0"
 dcbor = "^0.16.0"
 bc-ur = "^0.6.0"
 bc-envelope = "^0.21.0"

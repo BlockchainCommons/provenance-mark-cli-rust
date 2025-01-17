@@ -3,7 +3,8 @@ use std::{ fs, path::PathBuf };
 use bc_envelope::prelude::*;
 use clap::Args;
 use anyhow::Result;
-use provenance_mark::{ ProvenanceMarkGenerator, ProvenanceMarkInfo };
+use dcbor::Date;
+use provenance_mark::{ util::parse_date, ProvenanceMarkGenerator, ProvenanceMarkInfo };
 
 use crate::utils::read_existing_directory_path;
 
@@ -18,6 +19,11 @@ pub struct CommandArgs {
     /// mark itself.)
     #[arg(short, long, default_value = "Blank.")]
     comment: String,
+
+    /// The date of the next mark. If not supplied, the current date is used.
+    #[arg(short, long)]
+    #[clap(value_parser = parse_date)]
+    date: Option<Date>,
 }
 
 impl crate::exec::Exec for CommandArgs {
@@ -31,7 +37,8 @@ impl crate::exec::Exec for CommandArgs {
         let mut generator: ProvenanceMarkGenerator = serde_json::from_str(&generator_json)?;
 
         // Generate the next mark.
-        let mark = generator.next(dcbor::Date::now(), None::<CBOR>);
+        let date = self.date.clone().unwrap_or_else(dcbor::Date::now);
+        let mark = generator.next(date, None::<CBOR>);
         let mark_info = ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
 
         // Serialize the mark to JSON and write it as `mark-seq.json` to
