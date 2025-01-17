@@ -33,6 +33,7 @@ struct Cli {
 #[doc(hidden)]
 enum MainCommands {
     New(cmd::new::CommandArgs),
+    Next(cmd::next::CommandArgs),
 }
 
 #[doc(hidden)]
@@ -43,6 +44,7 @@ fn main() -> Result<()> {
 
     let output = match cli.command {
         MainCommands::New(args) => args.exec(),
+        MainCommands::Next(args) => args.exec(),
     };
     let output = output?;
     if !output.is_empty() {

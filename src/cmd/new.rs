@@ -12,7 +12,7 @@ use crate::utils::read_new_path;
 #[group(skip)]
 pub struct CommandArgs {
     /// Path to directory to be created. Must not already exist.
-    path: Option<PathBuf>,
+    path: PathBuf,
 
     /// The resolution of the provenance mark chain.
     #[arg(short, long, default_value = "quartile")]
@@ -49,6 +49,7 @@ impl Resolution {
 
 impl crate::exec::Exec for CommandArgs {
     fn exec(&self) -> Result<String> {
+        // Create the directory, ensuring it doesn't already exist.
         let path = self.create_dir()?;
 
         // Create the `marks` subdirectory inside `path`.
@@ -88,7 +89,7 @@ impl crate::exec::Exec for CommandArgs {
 
 impl CommandArgs {
     fn create_dir(&self) -> Result<PathBuf> {
-        let path = read_new_path(self.path.as_ref())?;
+        let path = read_new_path(&self.path)?;
 
         // Ensure the directory doesn't already exist.
         if path.exists() {
