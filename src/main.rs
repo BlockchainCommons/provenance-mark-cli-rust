@@ -1,4 +1,4 @@
-//! A command line tool for managing provenance mark chains and generating provenance marks. See the main repo [README](https://github.com/BlockchainCommons/bc-provenance-mark-cli-rust/blob/master/README.md).
+//! A command line tool for managing provenance mark chains and generating provenance marks. See the main repo [README](https://github.com/BlockchainCommons/provenance-mark-cli-rust/blob/master/README.md).
 
 #[doc(hidden)]
 mod cmd;
