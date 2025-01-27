@@ -1,6 +1,6 @@
 use std::{ fs, path::PathBuf };
 
-use bc_envelope::prelude::*;
+use dcbor::prelude::*;
 use clap::Args;
 use anyhow::Result;
 use dcbor::Date;

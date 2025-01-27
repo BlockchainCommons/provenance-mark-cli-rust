@@ -7,10 +7,6 @@ mod exec;
 #[doc(hidden)]
 mod styles;
 #[doc(hidden)]
-mod data_types;
-#[doc(hidden)]
-mod envelope_args;
-#[doc(hidden)]
 mod utils;
 
 use clap::{Parser, Subcommand};
@@ -39,7 +35,7 @@ enum MainCommands {
 
 #[doc(hidden)]
 fn main() -> Result<()> {
-    bc_envelope::register_tags();
+    // bc_envelope::register_tags();
 
     let cli = Cli::parse();
 

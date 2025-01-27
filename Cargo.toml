@@ -19,19 +19,9 @@ path = "src/main.rs"
 provenance-mark = "^0.3.1"
 dcbor = "^0.16.0"
 bc-ur = "^0.6.0"
-bc-envelope = "^0.21.0"
-bc-components = "^0.15.0"
-bc-rand = "^0.2.1"
 
 clap = { version = "^4.4.3", features = ["derive", "unstable-styles"] }
 anyhow = "^1.0.0"
 anstyle = "^1.0.1"
-hex = "^0.4.3"
-regex = "^1.9.5"
-rpassword = "7.3.1"
 glob = "0.3.2"
 serde_json = "1.0.135"
-
-[dev-dependencies]
-assert_cmd = "^2.0.12"
-indoc = "^2.0.0"
