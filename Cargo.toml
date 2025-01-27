@@ -2,7 +2,7 @@
 name = "provenance-mark-cli"
 version = "0.1.0"
 edition = "2021"
-description = "Provenance Marks Command Line Tool."
+description = "A command line tool for creating and managing Provenance Marks."
 authors = ["Blockchain Commons"]
 repository = "https://github.com/BlockchainCommons/bc-provenance-mark-cli-rust"
 readme = "README.md"
