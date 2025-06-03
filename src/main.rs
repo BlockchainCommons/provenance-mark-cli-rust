@@ -35,7 +35,7 @@ enum MainCommands {
 
 #[doc(hidden)]
 fn main() -> Result<()> {
-    // bc_envelope::register_tags();
+    bc_tags::register_tags();
 
     let cli = Cli::parse();
 
