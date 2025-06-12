@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
 use std::{env, io::Read, path::PathBuf};
-use anyhow::{ bail, Result };
+
+use anyhow::{Result, bail};
 use glob::glob;
 
 /// Read a new path, supporting globbing, and resolving relative paths.
@@ -29,7 +30,8 @@ pub fn read_new_path(path: &PathBuf) -> Result<PathBuf> {
     Ok(cleaned_path)
 }
 
-/// Read an existing directory path, supporting globbing, and resolving relative paths.
+/// Read an existing directory path, supporting globbing, and resolving relative
+/// paths.
 pub fn read_existing_directory_path(path: &PathBuf) -> Result<PathBuf> {
     let effective_path = read_new_path(path)?;
     if !effective_path.is_dir() {

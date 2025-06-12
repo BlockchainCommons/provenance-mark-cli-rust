@@ -1,11 +1,12 @@
-use std::{ fs, path::PathBuf };
+use std::{fs, path::PathBuf};
 
-use dcbor::prelude::*;
-use clap::{ Args, ValueEnum };
-use anyhow::{ bail, Result };
-use dcbor::Date;
+use anyhow::{Result, bail};
+use clap::{Args, ValueEnum};
+use dcbor::{Date, prelude::*};
 use provenance_mark::{
-    util::{parse_seed, parse_date}, ProvenanceMarkGenerator, ProvenanceMarkInfo, ProvenanceMarkResolution, ProvenanceSeed
+    ProvenanceMarkGenerator, ProvenanceMarkInfo, ProvenanceMarkResolution,
+    ProvenanceSeed,
+    util::{parse_date, parse_seed},
 };
 
 use crate::utils::read_new_path;
@@ -27,12 +28,13 @@ pub struct CommandArgs {
     #[arg(short, long, default_value = "quartile")]
     resolution: Resolution,
 
-    /// A comment to be included for the genesis mark. (Comments are not part of
-    /// the mark itself.)
+    /// A comment to be included for the genesis mark. (Comments are not part
+    /// of the mark itself.)
     #[arg(short, long, default_value = "Genesis mark.")]
     comment: String,
 
-    /// The date of the genesis mark. If not supplied, the current date is used.
+    /// The date of the genesis mark. If not supplied, the current date is
+    /// used.
     #[arg(short, long)]
     #[clap(value_parser = parse_date)]
     date: Option<Date>,
@@ -40,7 +42,8 @@ pub struct CommandArgs {
 
 #[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
 enum Resolution {
-    /// Good for physical works of art and applications requiring minimal mark size.
+    /// Good for physical works of art and applications requiring minimal mark
+    /// size.
     Low,
     /// Good for digital works of art.
     Medium,
@@ -71,21 +74,22 @@ impl crate::exec::Exec for CommandArgs {
         fs::create_dir(&marks_path)?;
 
         let mut generator: ProvenanceMarkGenerator =
-        if let Some(seed) = self.seed.clone() {
-            ProvenanceMarkGenerator::new_with_seed(
-                self.resolution.as_provenance_mark_resolution(),
-                seed
-            )
-        } else {
-            ProvenanceMarkGenerator::new_random(
-                self.resolution.as_provenance_mark_resolution()
-            )
-        };
+            if let Some(seed) = self.seed.clone() {
+                ProvenanceMarkGenerator::new_with_seed(
+                    self.resolution.as_provenance_mark_resolution(),
+                    seed,
+                )
+            } else {
+                ProvenanceMarkGenerator::new_random(
+                    self.resolution.as_provenance_mark_resolution(),
+                )
+            };
 
         // Generate the genesis mark.
         let date = self.date.clone().unwrap_or_else(dcbor::Date::now);
         let mark = generator.next(date, None::<CBOR>);
-        let mark_info = ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
+        let mark_info =
+            ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
 
         // Serialize the mark to JSON and write it as `mark-seq.json` to
         // `path/marks`.
@@ -102,8 +106,15 @@ impl crate::exec::Exec for CommandArgs {
         // Return a markdown summary of the provenance mark chain and the
         // genesis mark.
         let mut paragraphs: Vec<String> = Vec::new();
-        paragraphs.push(format!("Provenance mark chain created at: {}", path.display()));
-        paragraphs.push(format!("Mark {} written to: {}", mark.seq(), mark_path.display()));
+        paragraphs.push(format!(
+            "Provenance mark chain created at: {}",
+            path.display()
+        ));
+        paragraphs.push(format!(
+            "Mark {} written to: {}",
+            mark.seq(),
+            mark_path.display()
+        ));
         paragraphs.push(mark_info.markdown_summary());
         Ok(paragraphs.join("\n\n"))
     }

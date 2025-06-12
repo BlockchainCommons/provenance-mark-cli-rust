@@ -1,8 +1,8 @@
-use std::{ fs, path::PathBuf };
+use std::{fs, path::PathBuf};
 
+use anyhow::{Result, bail};
 use clap::Args;
-use anyhow::{bail, Result};
-use provenance_mark::{ ProvenanceMarkGenerator, ProvenanceMarkInfo };
+use provenance_mark::{ProvenanceMarkGenerator, ProvenanceMarkInfo};
 
 use crate::utils::read_existing_directory_path;
 
@@ -32,25 +32,32 @@ impl crate::exec::Exec for CommandArgs {
         // Read the generator from `path/generator.json`.
         let generator_path = path.join("generator.json");
         let generator_json = fs::read_to_string(generator_path)?;
-        let generator: ProvenanceMarkGenerator = serde_json::from_str(&generator_json)?;
+        let generator: ProvenanceMarkGenerator =
+            serde_json::from_str(&generator_json)?;
 
         // Validate the start and end sequence numbers.
         let last_valid_seq = generator.next_seq() - 1;
         let start_seq = self.start;
         let end_seq = self.end.unwrap_or(last_valid_seq);
         if start_seq > end_seq {
-            bail!("The start sequence number must be less than or equal to the end sequence number.");
+            bail!(
+                "The start sequence number must be less than or equal to the end sequence number."
+            );
         }
         if end_seq > last_valid_seq {
-            bail!("The end sequence number must be less than or equal to the last valid sequence number.");
+            bail!(
+                "The end sequence number must be less than or equal to the last valid sequence number."
+            );
         }
 
         // Accumulate the markdown summaries of the marks in the chain.
         let mut paragraphs: Vec<String> = Vec::new();
         for seq in start_seq..=end_seq {
-            let mark_path = path.join("marks").join(format!("mark-{}.json", seq));
+            let mark_path =
+                path.join("marks").join(format!("mark-{}.json", seq));
             let mark_json = fs::read_to_string(&mark_path)?;
-            let mark_info: ProvenanceMarkInfo = serde_json::from_str(&mark_json)?;
+            let mark_info: ProvenanceMarkInfo =
+                serde_json::from_str(&mark_json)?;
             // paragraphs.push(format!("### Mark {}", seq));
             paragraphs.push(mark_info.markdown_summary());
         }

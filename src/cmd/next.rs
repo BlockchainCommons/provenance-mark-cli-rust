@@ -1,10 +1,11 @@
-use std::{ fs, path::PathBuf };
+use std::{fs, path::PathBuf};
 
-use dcbor::prelude::*;
-use clap::Args;
 use anyhow::Result;
-use dcbor::Date;
-use provenance_mark::{ util::parse_date, ProvenanceMarkGenerator, ProvenanceMarkInfo };
+use clap::Args;
+use dcbor::{Date, prelude::*};
+use provenance_mark::{
+    ProvenanceMarkGenerator, ProvenanceMarkInfo, util::parse_date,
+};
 
 use crate::utils::read_existing_directory_path;
 
@@ -34,12 +35,14 @@ impl crate::exec::Exec for CommandArgs {
         // Read the generator from `path/generator.json`.
         let generator_path = path.join("generator.json");
         let generator_json = fs::read_to_string(&generator_path)?;
-        let mut generator: ProvenanceMarkGenerator = serde_json::from_str(&generator_json)?;
+        let mut generator: ProvenanceMarkGenerator =
+            serde_json::from_str(&generator_json)?;
 
         // Generate the next mark.
         let date = self.date.clone().unwrap_or_else(dcbor::Date::now);
         let mark = generator.next(date, None::<CBOR>);
-        let mark_info = ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
+        let mark_info =
+            ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
 
         // Serialize the mark to JSON and write it as `mark-seq.json` to
         // `path/marks`.
@@ -48,13 +51,18 @@ impl crate::exec::Exec for CommandArgs {
         let mark_path = marks_path.join(format!("mark-{}.json", mark.seq()));
         fs::write(&mark_path, mark_json)?;
 
-        // Serialize `generator` to JSON and write it back to `path/generator.json`.
+        // Serialize `generator` to JSON and write it back to
+        // `path/generator.json`.
         let generator_json = serde_json::to_string_pretty(&generator)?;
         fs::write(generator_path, generator_json)?;
 
         // Return a markdown summary of the generated mark.
         let mut paragraphs: Vec<String> = Vec::new();
-        paragraphs.push(format!("Mark {} written to: {}", mark.seq(), mark_path.display()));
+        paragraphs.push(format!(
+            "Mark {} written to: {}",
+            mark.seq(),
+            mark_path.display()
+        ));
         paragraphs.push(mark_info.markdown_summary());
         Ok(paragraphs.join("\n\n"))
     }

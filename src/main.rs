@@ -9,8 +9,8 @@ mod styles;
 #[doc(hidden)]
 mod utils;
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use crate::exec::Exec;
 
@@ -59,7 +59,8 @@ mod tests {
     #[test]
     fn test1() {
         let seed_str = "Jgk3vBEDvOjpQtjGDLu3kNQpIEPwg+HDNCL32dvFAS0=";
-        let seed: ProvenanceSeed = serde_json::from_value(json!(seed_str)).unwrap();
+        let seed: ProvenanceSeed =
+            serde_json::from_value(json!(seed_str)).unwrap();
         println!("{:?}", seed);
     }
 }
