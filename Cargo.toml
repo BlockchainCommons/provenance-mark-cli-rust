@@ -1,6 +1,6 @@
 [package]
 name = "provenance-mark-cli"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
 description = "A command line tool for creating and managing Provenance Marks."
 authors = ["Blockchain Commons"]
