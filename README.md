@@ -6,16 +6,7 @@
 
 ---
 
-`provenance` is a command line tool for creating and managing [provenance mark](https://github.com/BlockchainCommons/| Wolf McNally      | Lead Researcher/Engineer         | [@WolfMcNally](https://github.com/wolfmcnally)    | \<Wolf@WolfMcNally.com\>              | 9436 52EE 3844 1760 C3DC  3536 4B6C 2FCF 8947 80AE |
-
-## Version History
-
-### 0.3.0, July 3, 2025
-
-- Align to dependencies.
-- Code cleanup and formatting improvements.
-
-## Responsible Disclosureearch/blob/master/papers/bcr-2025-001-provenance-mark.md) chains.
+`provenance` is a command line tool for creating and managing [provenance mark](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2025-001-provenance-mark.md) chains.
 
 * Creates a new provenance mark chain, including the genesis mark.
 * Adds a new mark to an existing chain.
@@ -254,6 +245,13 @@ My cool new work I want to be tied to the chain.
 ## Status - Alpha
 
 `provenance`  is currently under active development and in the alpha testing phase. It should not be used for production tasks until it has had further testing and auditing. See [Blockchain Commons' Development Phases](https://github.com/BlockchainCommons/Community/blob/master/release-path.md).
+
+## Version History
+
+### 0.3.0, July 3, 2025
+
+- Align to dependencies.
+- Code cleanup and formatting improvements.
 
 ## Financial Support
 
