@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 use clap::Args;
-use dcbor::{Date, prelude::*};
+use dcbor::prelude::*;
 use provenance_mark::{
     ProvenanceMarkGenerator, ProvenanceMarkInfo, util::parse_date,
 };
@@ -39,7 +39,7 @@ impl crate::exec::Exec for CommandArgs {
             serde_json::from_str(&generator_json)?;
 
         // Generate the next mark.
-        let date = self.date.clone().unwrap_or_else(dcbor::Date::now);
+        let date = self.date.clone().unwrap_or_else(Date::now);
         let mark = generator.next(date, None::<CBOR>);
         let mark_info =
             ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());

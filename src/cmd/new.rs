@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{Result, bail};
 use clap::{Args, ValueEnum};
-use dcbor::{Date, prelude::*};
+use dcbor::prelude::*;
 use provenance_mark::{
     ProvenanceMarkGenerator, ProvenanceMarkInfo, ProvenanceMarkResolution,
     ProvenanceSeed,
@@ -86,7 +86,7 @@ impl crate::exec::Exec for CommandArgs {
             };
 
         // Generate the genesis mark.
-        let date = self.date.clone().unwrap_or_else(dcbor::Date::now);
+        let date = self.date.clone().unwrap_or_else(Date::now);
         let mark = generator.next(date, None::<CBOR>);
         let mark_info =
             ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
