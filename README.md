@@ -29,13 +29,13 @@
 To install from crates.io, run:
 
 ```bash
-$ cargo install provenance-mark-cli
+cargo install provenance-mark-cli
 ```
 
 To install from source, clone this repo, change to its root directory and run:
 
 ```bash
-$ cargo install --path .
+cargo install --path .
 ```
 
 ## Documentation
@@ -58,47 +58,53 @@ The `provenance new` command is used to create a new directory in which the seed
 Running `provenance new` will create a new directory with the specified name, and write the genesis mark to a file named `mark-0.json` in the `marks` subdirectory of the new directory:
 
 ```bash
-$ provenance new mychain
+provenance new mychain
 ```
 
 The output will look something like this:
 
 ```
-Provenance mark chain created at: /Users/wolf/mychain
-
-Mark 0 written to: /Users/wolf/mychain/marks/mark-0.json
-
----
-
-2025-01-27T21:59:52Z
-
-#### ur:provenance/lfaohdftldguvoglatjpmdhnbkzctthlkobyguehwlsefpamsnnntidsfzbglefmhdnblnpyasjltynldtfwwnaapmadzcsrctlsbdpsztonstolgllnhnpavsglclgamero
-
-#### `🅟 PLAY WASP FLUX SWAN`
-
-🅟 💎 🦄 🍓 🧢
-
-Genesis mark.
+│ Provenance mark chain created at: /Users/wolf/mychain
+│
+│ Mark 0 written to: /Users/wolf/mychain/marks/mark-0.json
+│
+│ ---
+│
+│ 2025-01-27T21:59:52Z
+│
+│ #### ur:provenance/lfaohdftldguvoglatjpmdhnbkzctthlkobyguehwlsefpamsnnntidsfzbglefmhdnblnpyasjltynldtfwwnaapmadzcsrctlsbdpsztonstolgllnhnpavsglclgamero
+│
+│ #### `🅟 PLAY WASP FLUX SWAN`
+│
+│ 🅟 💎 🦄 🍓 🧢
+│
+│ Genesis mark.
 ```
 
 The format is:
 
 ```
-The full path of the new directory.
-
-Where the genesis mark (mark-0.json) was written.
-
----
-
-Date - ISO-8601 format.
-
-Provenance Mark UR - This is the complete data structure in UR format. It is marked with a `####` for Markdown systems like GitHub which automatically add anchors to headers.
-
-Provenance Mark Bytewords Identifier - This is the bytewords identifier for the mark. It is marked with a `####` for Markdown systems like GitHub which automatically add anchors to headers.
-
-Provenance Mark Bytemoji Identifier - This is the bytemoji identifier for the mark. Anchors usually cannot be created from emoji, so there is no `####` here.
-
-Comment
+│ The full path of the new directory.
+│
+│ Where the genesis mark (mark-0.json) was written.
+│
+│ ---
+│
+│ Date - ISO-8601 format.
+│
+│ Provenance Mark UR - This is the complete data structure in UR format.
+│ It is marked with a `####` for Markdown systems like GitHub which
+│ automatically add anchors to headers.
+│
+│ Provenance Mark Bytewords Identifier - This is the bytewords identifier
+│ for the mark. It is marked with a `####` for Markdown systems like
+│ GitHub which automatically add anchors to headers.
+│
+│ Provenance Mark Bytemoji Identifier - This is the bytemoji identifier
+│ for the mark. Anchors usually cannot be created from emoji,
+│ so there is no `####` here.
+│
+│ Comment
 ```
 
 Everything from the `---` down can be copied and pasted into a Markdown file, a text file, or any other document, and published as, for example, a GitHub Gist.
@@ -108,14 +114,12 @@ Everything from the `---` down can be copied and pasted into a Markdown file, a 
 The created directory will look like this:
 
 ```bash
-$ tree mychain
-```
+tree mychain
 
-```
-mychain
-├── generator.json
-└── marks
-    └── mark-0.json
+│ mychain
+│ ├── generator.json
+│ └── marks
+│     └── mark-0.json
 ```
 
 `generator.json` contains the state of the mark chain, including the seed, chain ID, and next sequence number.
@@ -123,17 +127,15 @@ mychain
 **NOTE:** It is vitally important that the `generator.json` file is kept secret. It should not be shared or published. It is used to generate the next mark in the chain. If it is lost or corrupted, the chain cannot be continued. If it is stolen, an attacker could forge marks in the chain.
 
 ```bash
-$ cat mychain/generator.json
-```
+cat mychain/generator.json
 
-```json
-{
-  "res": 2,
-  "seed": "+3viDXTkbHL99p2LYQhiyqtFqr4v4mYpDvXtAmqhzME=",
-  "chainID": "iVPiTgdylWAK/dFddhFTMQ==",
-  "nextSeq": 1,
-  "rngState": "RKs3oewHj+NH5HnNCXJW9z0GCLSvoNx+EwfHKG344NM="
-}
+│ {
+│   "res": 2,
+│   "seed": "+3viDXTkbHL99p2LYQhiyqtFqr4v4mYpDvXtAmqhzME=",
+│   "chainID": "iVPiTgdylWAK/dFddhFTMQ==",
+│   "nextSeq": 1,
+│   "rngState": "RKs3oewHj+NH5HnNCXJW9z0GCLSvoNx+EwfHKG344NM="
+│ }
 ```
 
 `marks` is a directory containing the mark files, named `mark-0.json` (the genesis mark), `mark-1.json`, etc. There is nothing secret in these files, but they contain redundant information and are not intended to be human-readable. (See the `print` sub-command below for a human-readable version of a mark.)
@@ -141,24 +143,22 @@ $ cat mychain/generator.json
 The only field of the mark that you may edit is the `comment` field. This is not part of the mark itself, but is included in the provenance mark chain for informational purposes.
 
 ```sh
-$ cat mychain/marks/mark-0.json
-```
+cat mychain/marks/mark-0.json
 
-```json
-{
-  "ur": "ur:provenance/lfaohdftldguvoglatjpmdhnbkzctthlkobyguehwlsefpamsnnntidsfzbglefmhdnblnpyasjltynldtfwwnaapmadzcsrctlsbdpsztonstolgllnhnpavsglclgamero",
-  "bytewords": "🅟 PLAY WASP FLUX SWAN",
-  "bytemoji": "🅟 💎 🦄 🍓 🧢",
-  "comment": "Genesis mark.",
-  "mark": {
-    "seq": 0,
-    "date": "2025-01-27T21:59:52Z",
-    "res": 2,
-    "chain_id": "iVPiTgdylWAK/dFddhFTMQ==",
-    "key": "iVPiTgdylWAK/dFddhFTMQ==",
-    "hash": "q+xDzagOYatKFOk+Yt0aHw=="
-  }
-}
+│ {
+│   "ur": "ur:provenance/lfaohdftldguvoglatjpmdhnbkzctthlkobyguehwlsefpamsnnntidsfzbglefmhdnblnpyasjltynldtfwwnaapmadzcsrctlsbdpsztonstolgllnhnpavsglclgamero",
+│   "bytewords": "🅟 PLAY WASP FLUX SWAN",
+│   "bytemoji": "🅟 💎 🦄 🍓 🧢",
+│   "comment": "Genesis mark.",
+│   "mark": {
+│     "seq": 0,
+│     "date": "2025-01-27T21:59:52Z",
+│     "res": 2,
+│     "chain_id": "iVPiTgdylWAK/dFddhFTMQ==",
+│     "key": "iVPiTgdylWAK/dFddhFTMQ==",
+│     "hash": "q+xDzagOYatKFOk+Yt0aHw=="
+│   }
+│ }
 ```
 
 ## Adding a New Mark to a Chain
@@ -171,37 +171,33 @@ The `provenance next` command is used to generate the next mark in a chain.
 **NOTE:** Once a mark has been generated, the `generator.json` file is updated to the next sequence number and the random number generator's state is updated. The tool does not provide a way to roll back to a previous state, so if you want to experiment with generating the same mark multiple times, you should back up the `generator.json` file first, or consider using Git to manage the chain directory (in a private repo!)
 
 ```bash
-$ provenance next mychain --comment "My cool new work I want to be tied to the chain."
-```
+provenance next mychain --comment "My cool new work I want to be tied to the chain."
 
-```
-Mark 1 written to: mychain/marks/mark-1.json
-
----
-
-2025-01-27T22:19:15Z
-
-#### ur:provenance/lfaohdftftgydnnssacmvwhprtplplzsgwcspaaygmveeoeskgdipmwfynnncswsnngoyanygmbkftdiwngoztahcltlctgeaxeoswlagroxhfwpnbmsmehybsvllgjpnett
-
-#### `🅟 COLA TUNA CUSP WAND`
-
-🅟 🤑 🐶 👺 🦉
-
-My cool new work I want to be tied to the chain.
+│ Mark 1 written to: mychain/marks/mark-1.json
+│
+│ ---
+│
+│ 2025-01-27T22:19:15Z
+│
+│ #### ur:provenance/lfaohdftftgydnnssacmvwhprtplplzsgwcspaaygmveeoeskgdipmwfynnncswsnngoyanygmbkftdiwngoztahcltlctgeaxeoswlagroxhfwpnbmsmehybsvllgjpnett
+│
+│ #### `🅟 COLA TUNA CUSP WAND`
+│
+│ 🅟 🤑 🐶 👺 🦉
+│
+│ My cool new work I want to be tied to the chain.
 ```
 
 The `generator.json` file is updated, and the new mark is written as a new file to the `marks` directory.
 
 ```bash
-$ tree mychain
-```
+tree mychain
 
-```
-mychain
-├── generator.json
-└── marks
-    ├── mark-0.json
-    └── mark-1.json
+│ mychain
+│ ├── generator.json
+│ └── marks
+│     ├── mark-0.json
+│     └── mark-1.json
 ```
 
 ## Printing Marks
@@ -213,33 +209,31 @@ The `provenance print` command is used to print one or more marks from a chain. 
 - With no `--start` or `--end` options, all marks in the chain are printed.
 
 ```bash
-$ provenance print mychain
-```
+provenance print mychain
 
-```
----
-
-2025-01-27T21:59:52Z
-
-#### ur:provenance/lfaohdftldguvoglatjpmdhnbkzctthlkobyguehwlsefpamsnnntidsfzbglefmhdnblnpyasjltynldtfwwnaapmadzcsrctlsbdpsztonstolgllnhnpavsglclgamero
-
-#### `🅟 PLAY WASP FLUX SWAN`
-
-🅟 💎 🦄 🍓 🧢
-
-Genesis mark.
-
----
-
-2025-01-27T22:19:15Z
-
-#### ur:provenance/lfaohdftftgydnnssacmvwhprtplplzsgwcspaaygmveeoeskgdipmwfynnncswsnngoyanygmbkftdiwngoztahcltlctgeaxeoswlagroxhfwpnbmsmehybsvllgjpnett
-
-#### `🅟 COLA TUNA CUSP WAND`
-
-🅟 🤑 🐶 👺 🦉
-
-My cool new work I want to be tied to the chain.
+│ ---
+│
+│ 2025-01-27T21:59:52Z
+│
+│ #### ur:provenance/lfaohdftldguvoglatjpmdhnbkzctthlkobyguehwlsefpamsnnntidsfzbglefmhdnblnpyasjltynldtfwwnaapmadzcsrctlsbdpsztonstolgllnhnpavsglclgamero
+│
+│ #### `🅟 PLAY WASP FLUX SWAN`
+│
+│ 🅟 💎 🦄 🍓 🧢
+│
+│ Genesis mark.
+│
+│ ---
+│
+│ 2025-01-27T22:19:15Z
+│
+│ #### ur:provenance/lfaohdftftgydnnssacmvwhprtplplzsgwcspaaygmveeoeskgdipmwfynnncswsnngoyanygmbkftdiwngoztahcltlctgeaxeoswlagroxhfwpnbmsmehybsvllgjpnett
+│
+│ #### `🅟 COLA TUNA CUSP WAND`
+│
+│ 🅟 🤑 🐶 👺 🦉
+│
+│ My cool new work I want to be tied to the chain.
 ```
 
 ## Status - Alpha
