@@ -242,6 +242,11 @@ provenance print mychain
 
 ## Version History
 
+### 0.4.0, September 16, 2025
+
+- Align to dependencies.
+- Update documentation command line examples.
+
 ### 0.3.0, July 3, 2025
 
 - Align to dependencies.
