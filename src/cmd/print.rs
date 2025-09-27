@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::{Result, bail};
-use clap::Args;
+use clap::{Args, ValueEnum};
 use provenance_mark::{ProvenanceMarkGenerator, ProvenanceMarkInfo};
 
 use crate::utils::read_existing_directory_path;
@@ -22,6 +22,17 @@ pub struct CommandArgs {
     /// last mark in the chain is used.
     #[arg(short, long)]
     end: Option<u32>,
+
+    /// Output format for the rendered marks.
+    #[arg(long, value_enum, default_value_t = OutputFormat::Markdown)]
+    format: OutputFormat,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
+pub enum OutputFormat {
+    Markdown,
+    Ur,
+    Json,
 }
 
 impl crate::exec::Exec for CommandArgs {
@@ -50,18 +61,35 @@ impl crate::exec::Exec for CommandArgs {
             );
         }
 
-        // Accumulate the markdown summaries of the marks in the chain.
-        let mut paragraphs: Vec<String> = Vec::new();
+        // Collect the requested marks.
+        let mut mark_infos: Vec<ProvenanceMarkInfo> = Vec::new();
         for seq in start_seq..=end_seq {
             let mark_path =
                 path.join("marks").join(format!("mark-{}.json", seq));
             let mark_json = fs::read_to_string(&mark_path)?;
             let mark_info: ProvenanceMarkInfo =
                 serde_json::from_str(&mark_json)?;
-            // paragraphs.push(format!("### Mark {}", seq));
-            paragraphs.push(mark_info.markdown_summary());
+            mark_infos.push(mark_info);
         }
 
-        Ok(paragraphs.join("\n"))
+        match self.format {
+            OutputFormat::Markdown => {
+                let summaries: Vec<String> = mark_infos
+                    .iter()
+                    .map(ProvenanceMarkInfo::markdown_summary)
+                    .collect();
+                Ok(summaries.join("\n"))
+            }
+            OutputFormat::Ur => {
+                let urs: Vec<String> = mark_infos
+                    .iter()
+                    .map(|info| info.ur().to_string())
+                    .collect();
+                Ok(urs.join("\n"))
+            }
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(&mark_infos).map_err(Into::into)
+            }
+        }
     }
 }

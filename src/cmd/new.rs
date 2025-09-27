@@ -5,10 +5,10 @@ use clap::{Args, ValueEnum};
 use dcbor::prelude::*;
 use provenance_mark::{
     ProvenanceMarkGenerator, ProvenanceMarkInfo, ProvenanceMarkResolution,
-    ProvenanceSeed,
-    util::{parse_date, parse_seed},
+    ProvenanceSeed, util::parse_date,
 };
 
+use super::{info::InfoArgs, seed};
 use crate::utils::read_new_path;
 
 /// Initialize a directory with a new provenance mark chain.
@@ -20,8 +20,7 @@ pub struct CommandArgs {
 
     /// A seed to use for the provenance mark chain, encoded as base64.
     /// If not supplied, a random seed is generated.
-    #[arg(short, long)]
-    #[clap(value_parser = parse_seed)]
+    #[arg(short, long, value_parser = seed::parse_seed)]
     seed: Option<ProvenanceSeed>,
 
     /// The resolution of the provenance mark chain.
@@ -38,6 +37,9 @@ pub struct CommandArgs {
     #[arg(short, long)]
     #[clap(value_parser = parse_date)]
     date: Option<Date>,
+
+    #[command(flatten)]
+    info: InfoArgs,
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
@@ -87,7 +89,11 @@ impl crate::exec::Exec for CommandArgs {
 
         // Generate the genesis mark.
         let date = self.date.clone().unwrap_or_else(Date::now);
-        let mark = generator.next(date, None::<CBOR>);
+        let info = self.info.to_cbor()?;
+        let mark = match info {
+            Some(info_cbor) => generator.next(date, Some(info_cbor)),
+            None => generator.next(date, None::<CBOR>),
+        };
         let mark_info =
             ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
 

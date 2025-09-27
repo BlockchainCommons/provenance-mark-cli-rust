@@ -29,6 +29,9 @@ provenance-mark = "^0.13.0"
 dcbor = "^0.23.0"
 bc-ur = "^0.13.0"
 bc-tags = "^0.6.0"
+bc-components = "^0.25.0"
+hex = "^0.4.3"
+base64 = "^0.22.0"
 
 clap = { version = "^4.4.3", features = ["derive", "unstable-styles"] }
 anyhow = "^1.0.0"

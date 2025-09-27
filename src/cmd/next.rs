@@ -7,6 +7,7 @@ use provenance_mark::{
     ProvenanceMarkGenerator, ProvenanceMarkInfo, util::parse_date,
 };
 
+use super::info::InfoArgs;
 use crate::utils::read_existing_directory_path;
 
 /// Generate the next provenance mark in a chain.
@@ -22,9 +23,11 @@ pub struct CommandArgs {
     comment: String,
 
     /// The date of the next mark. If not supplied, the current date is used.
-    #[arg(short, long)]
-    #[clap(value_parser = parse_date)]
+    #[arg(short, long, value_parser = parse_date)]
     date: Option<Date>,
+
+    #[command(flatten)]
+    info: InfoArgs,
 }
 
 impl crate::exec::Exec for CommandArgs {
@@ -40,7 +43,11 @@ impl crate::exec::Exec for CommandArgs {
 
         // Generate the next mark.
         let date = self.date.clone().unwrap_or_else(Date::now);
-        let mark = generator.next(date, None::<CBOR>);
+        let info = self.info.to_cbor()?;
+        let mark = match info {
+            Some(info_cbor) => generator.next(date, Some(info_cbor)),
+            None => generator.next(date, None::<CBOR>),
+        };
         let mark_info =
             ProvenanceMarkInfo::new(mark.clone(), self.comment.clone());
 
