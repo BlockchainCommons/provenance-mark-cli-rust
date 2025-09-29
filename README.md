@@ -242,6 +242,12 @@ provenance print mychain
 
 ## Version History
 
+### 0.5.0, September 29, 2025
+
+- More flexible seed format handling
+- Added --quiet option to `new` command
+- Refined --info option handling
+
 ### 0.4.0, September 16, 2025
 
 - Align to dependencies.
