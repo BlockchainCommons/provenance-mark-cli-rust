@@ -8,7 +8,7 @@ use provenance_mark::{
     ProvenanceSeed, util::parse_date,
 };
 
-use super::{info::InfoArgs, seed};
+use super::{info::InfoArgs, print::OutputFormat, seed};
 use crate::utils::read_new_path;
 
 /// Initialize a directory with a new provenance mark chain.
@@ -37,6 +37,14 @@ pub struct CommandArgs {
     #[arg(short, long)]
     #[clap(value_parser = parse_date)]
     date: Option<Date>,
+
+    /// Suppress informational status output on stderr/stdout.
+    #[arg(short, long)]
+    quiet: bool,
+
+    /// Output format for the creation summary.
+    #[arg(long, value_enum, default_value_t = OutputFormat::Markdown)]
+    format: OutputFormat,
 
     #[command(flatten)]
     info: InfoArgs,
@@ -111,18 +119,37 @@ impl crate::exec::Exec for CommandArgs {
 
         // Return a markdown summary of the provenance mark chain and the
         // genesis mark.
-        let mut paragraphs: Vec<String> = Vec::new();
-        paragraphs.push(format!(
-            "Provenance mark chain created at: {}",
-            path.display()
-        ));
-        paragraphs.push(format!(
-            "Mark {} written to: {}",
-            mark.seq(),
-            mark_path.display()
-        ));
-        paragraphs.push(mark_info.markdown_summary());
-        Ok(paragraphs.join("\n\n"))
+        let status_lines = [
+            format!("Provenance mark chain created at: {}", path.display()),
+            format!("Mark {} written to: {}", mark.seq(), mark_path.display()),
+        ];
+
+        match self.format {
+            OutputFormat::Markdown => {
+                let mut paragraphs: Vec<String> = Vec::new();
+                if !self.quiet {
+                    paragraphs.extend(status_lines.iter().cloned());
+                }
+                paragraphs.push(mark_info.markdown_summary());
+                Ok(paragraphs.join("\n\n"))
+            }
+            OutputFormat::Ur => {
+                if !self.quiet {
+                    for line in &status_lines {
+                        eprintln!("{}", line);
+                    }
+                }
+                Ok(mark_info.ur().to_string())
+            }
+            OutputFormat::Json => {
+                if !self.quiet {
+                    for line in &status_lines {
+                        eprintln!("{}", line);
+                    }
+                }
+                serde_json::to_string_pretty(&mark_info).map_err(Into::into)
+            }
+        }
     }
 }
 
