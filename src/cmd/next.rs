@@ -7,7 +7,7 @@ use provenance_mark::{
     ProvenanceMarkGenerator, ProvenanceMarkInfo, util::parse_date,
 };
 
-use super::info::InfoArgs;
+use super::{info::InfoArgs, print::OutputFormat};
 use crate::utils::read_existing_directory_path;
 
 /// Generate the next provenance mark in a chain.
@@ -25,6 +25,14 @@ pub struct CommandArgs {
     /// The date of the next mark. If not supplied, the current date is used.
     #[arg(short, long, value_parser = parse_date)]
     date: Option<Date>,
+
+    /// Suppress informational status output on stderr/stdout.
+    #[arg(short, long)]
+    quiet: bool,
+
+    /// Output format for the mark.
+    #[arg(long, value_enum, default_value_t = OutputFormat::Markdown)]
+    format: OutputFormat,
 
     #[command(flatten)]
     info: InfoArgs,
@@ -63,14 +71,31 @@ impl crate::exec::Exec for CommandArgs {
         let generator_json = serde_json::to_string_pretty(&generator)?;
         fs::write(generator_path, generator_json)?;
 
-        // Return a markdown summary of the generated mark.
-        let mut paragraphs: Vec<String> = Vec::new();
-        paragraphs.push(format!(
-            "Mark {} written to: {}",
-            mark.seq(),
-            mark_path.display()
-        ));
-        paragraphs.push(mark_info.markdown_summary());
-        Ok(paragraphs.join("\n\n"))
+        // Return output based on format.
+        let status_line =
+            format!("Mark {} written to: {}", mark.seq(), mark_path.display());
+
+        match self.format {
+            OutputFormat::Markdown => {
+                let mut paragraphs: Vec<String> = Vec::new();
+                if !self.quiet {
+                    paragraphs.push(status_line);
+                }
+                paragraphs.push(mark_info.markdown_summary());
+                Ok(paragraphs.join("\n\n"))
+            }
+            OutputFormat::Ur => {
+                if !self.quiet {
+                    eprintln!("{}", status_line);
+                }
+                Ok(mark_info.ur().to_string())
+            }
+            OutputFormat::Json => {
+                if !self.quiet {
+                    eprintln!("{}", status_line);
+                }
+                serde_json::to_string_pretty(&mark_info).map_err(Into::into)
+            }
+        }
     }
 }
