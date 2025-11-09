@@ -1,6 +1,6 @@
 [package]
 name = "provenance-mark-cli"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 description = "A command line tool for creating and managing Provenance Marks."
 authors = ["Blockchain Commons"]
@@ -25,11 +25,11 @@ name = "provenance"
 path = "src/main.rs"
 
 [dependencies]
-provenance-mark = "^0.13.0"
-dcbor = "^0.23.0"
-bc-ur = "^0.13.0"
-bc-tags = "^0.6.0"
-bc-components = "^0.25.0"
+provenance-mark = "^0.15.0"
+dcbor = "^0.23.2"
+bc-ur = "^0.15.0"
+bc-tags = "^0.8.0"
+bc-components = "^0.27.0"
 hex = "^0.4.3"
 base64 = "^0.22.0"
 
