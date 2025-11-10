@@ -31,6 +31,7 @@ enum MainCommands {
     New(cmd::new::CommandArgs),
     Next(cmd::next::CommandArgs),
     Print(cmd::print::CommandArgs),
+    Validate(cmd::validate::CommandArgs),
 }
 
 #[doc(hidden)]
@@ -43,6 +44,7 @@ fn main() -> Result<()> {
         MainCommands::New(args) => args.exec(),
         MainCommands::Next(args) => args.exec(),
         MainCommands::Print(args) => args.exec(),
+        MainCommands::Validate(args) => args.exec(),
     };
     let output = output?;
     if !output.is_empty() {

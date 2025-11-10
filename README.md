@@ -11,8 +11,8 @@
 * Creates a new provenance mark chain, including the genesis mark.
 * Adds a new mark to an existing chain.
 * Prints marks from a chain in a form that can be published.
+* Validates one or more provenance marks, checking for integrity issues.
 * DOES NOT currently support assigning or parsing the `info` field of a mark.
-* DOES NOT currently support validating the integrity of a mark chain.
 
 **NOTE:** This tool is currently in a pre-release state, and is under active development. Use at your own risk.
 
@@ -199,6 +199,71 @@ tree mychain
 │     ├── mark-0.json
 │     └── mark-1.json
 ```
+
+## Validating Marks
+
+The `provenance validate` command is used to validate one or more provenance marks. It accepts one or more `ur:provenance` URIs as arguments and checks them for integrity issues.
+
+The validator checks for:
+- **Duplicates**: Exact duplicate marks in the input
+- **Chain continuity**: Proper sequence numbering and hash chain integrity
+- **Genesis marks**: Presence of a valid genesis mark (sequence 0)
+- **Multiple chains**: Whether marks belong to different chains
+- **Sequence gaps**: Missing marks in the chain
+
+### Basic Usage
+
+To validate marks, provide their URIs as arguments:
+
+```bash
+provenance validate ur:provenance/... ur:provenance/... ...
+```
+
+### Exit Codes and Behavior
+
+By default, the `validate` command:
+- **Exits with code 0** (success) if marks form a single, perfect chain with no issues
+- **Exits with code 1** (failure) if any issues are detected
+- **Produces no output** for perfect chains (following the Unix philosophy of silence on success)
+
+### Reporting
+
+The validator only reports "interesting" information:
+- A single contiguous chain of well-formed marks with no issues produces **no output**
+- Any exceptional states (duplicates, gaps, multiple chains, missing genesis) are reported
+
+Example output for marks with a gap:
+
+```
+Error: Validation failed with issues:
+Total marks: 4
+Chains: 1
+
+Chain 1: 630dcd29
+  0: 8fca2ff8 (genesis mark)
+  1: 11cdf67d
+  3: 11375c74 (gap: 2 missing)
+  4: 85240945
+```
+
+Each mark is displayed with its sequence number and short identifier (first 4 bytes of hash). Issues are shown inline as annotations:
+- `(genesis mark)` - Marks the genesis (sequence 0) mark
+- `(gap: N missing)` - Indicates a sequence gap (N marks are missing before this one)
+- `(date X < Y)` - Date ordering violation between marks
+- Other validation issues appear similarly
+
+### Warning Mode
+
+The `--warn` flag allows validation to succeed even when issues are detected:
+
+```bash
+provenance validate --warn ur:provenance/... ur:provenance/...
+```
+
+With `--warn`:
+- Issues are reported to stdout
+- Command exits with code 0 (success)
+- Useful for auditing without causing build failures
 
 ## Printing Marks
 
