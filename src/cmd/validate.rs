@@ -1,7 +1,7 @@
 use anyhow::{Result, bail};
 use bc_ur::URDecodable;
 use clap::Args;
-use provenance_mark::ProvenanceMark;
+use provenance_mark::{ProvenanceMark, ValidationReportFormat};
 
 /// Validate one or more provenance marks.
 #[derive(Debug, Args)]
@@ -36,7 +36,7 @@ impl crate::exec::Exec for CommandArgs {
         let report = ProvenanceMark::validate(marks);
 
         // Format the output
-        let output = report.format();
+        let output = report.format(ValidationReportFormat::default());
 
         // Determine if we should fail
         if report.has_issues() && !self.warn {
