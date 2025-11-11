@@ -41,14 +41,15 @@ pub fn read_existing_directory_path(path: &PathBuf) -> Result<PathBuf> {
 }
 
 pub fn read_argument(argument: Option<&str>) -> Result<String> {
-    let mut string = String::new();
-    if argument.is_none() {
-        std::io::stdin().read_to_string(&mut string)?;
+    let string = if let Some(arg) = argument {
+        arg.to_string()
     } else {
-        string = argument.as_ref().unwrap().to_string();
-    }
+        let mut s = String::new();
+        std::io::stdin().read_to_string(&mut s)?;
+        s
+    };
     if string.is_empty() {
         bail!("No argument provided");
     }
-    Ok(string.to_string())
+    Ok(string)
 }

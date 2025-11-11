@@ -31,7 +31,9 @@ fn parse_seed_hex(input: &str) -> Option<Result<ProvenanceSeed, String>> {
     if source.is_empty() {
         return None;
     }
-    if source.len() % 2 != 0 || !source.chars().all(|c| c.is_ascii_hexdigit()) {
+    if !source.len().is_multiple_of(2)
+        || !source.chars().all(|c| c.is_ascii_hexdigit())
+    {
         return None;
     }
     Some(

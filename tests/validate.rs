@@ -1,5 +1,6 @@
 use std::process::Command;
 
+use assert_cmd::Command as AssertCommand;
 use bc_ur::UREncodable;
 use chrono::TimeZone;
 use dcbor::Date;
@@ -7,6 +8,7 @@ use indoc::indoc;
 use provenance_mark::{
     ProvenanceMark, ProvenanceMarkGenerator, ProvenanceMarkResolution,
 };
+use tempfile::TempDir;
 
 /// A macro to assert that two values are equal, printing them if they are not,
 /// including newlines and indentation they may contain. This macro is useful
@@ -332,5 +334,166 @@ mod validate_command {
               1: 1b806d6c
               3: 761a5e74 (gap: 2 missing)
         "#}.trim());
+    }
+}
+
+mod quartile_directory_workflow {
+    use super::*;
+
+    #[test]
+    fn test_new_next_validate_dir() {
+        // Create a temporary directory for the test
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let chain_path = temp_dir.path().join("test-chain");
+
+        // Step 1: Create a new chain with Quartile resolution using a fixed
+        // date
+        let new_output = AssertCommand::cargo_bin("provenance")
+            .unwrap()
+            .arg("new")
+            .arg(&chain_path)
+            .arg("--resolution")
+            .arg("quartile")
+            .arg("--date")
+            .arg("2023-06-20T12:00:00Z")
+            .arg("--comment")
+            .arg("Test genesis mark")
+            .arg("--quiet")
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+
+        let new_output_str = String::from_utf8_lossy(&new_output);
+        assert!(
+            !new_output_str.is_empty(),
+            "Expected output from 'new' command"
+        );
+
+        // Step 2: Generate three additional marks using the 'next' subcommand
+        // with sequential dates
+        for i in 1..=3 {
+            AssertCommand::cargo_bin("provenance")
+                .unwrap()
+                .arg("next")
+                .arg(&chain_path)
+                .arg("--date")
+                .arg(format!("2023-06-{}T12:00:00Z", 20 + i))
+                .arg("--comment")
+                .arg(format!("Mark {}", i))
+                .arg("--quiet")
+                .assert()
+                .success();
+        }
+
+        // Step 3: Validate all marks in the directory using 'validate --dir'
+        let validate_output = AssertCommand::cargo_bin("provenance")
+            .unwrap()
+            .arg("validate")
+            .arg("--dir")
+            .arg(&chain_path)
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+
+        let validate_output_str = String::from_utf8_lossy(&validate_output);
+
+        // Step 4: Expect the report will show no errors (empty output for
+        // perfect chain)
+        assert_actual_expected!(
+            validate_output_str.trim(),
+            "",
+            "Expected empty output for a valid chain with no issues"
+        );
+    }
+
+    #[test]
+    fn test_validate_envelope_fixtures() {
+        // Test the three fixtures from the prompt:
+        // 1. ur:provenance - direct provenance mark
+        // 2. ur:xid - XIDDocument with provenance assertion
+        // 3. ur:envelope - envelope with provenance assertion
+
+        let fixtures = [
+            "ur:provenance/lfaohdftlrcydyoxwfwkolcnnswdzstyimctlyteehynhkckjynysthkdestnlutfmbshppmgmlsnesggltpspqzpfeemehlssgturbtkkfgtavawnwpfmkbkginlyisecvt",
+            "ur:xid/tpsplstpsotanshdhdcxwsnyfhfdsgrtvyveptftfggdoeaaknldwmbyprvawebztkbyurinvlnltihfknbeoycsfzlftpsotngdgmgwhflfaxhdimbkfyndgyplolpkosdtbkcmdadyamincymdwnbsfrloglasmhwkrylkpklthttdzeecjtztjkvynnfsgadrhebdzswlinttsovtbdynrnotenzsflwzhlhfsrkewsehhkhhbnaseydtbkgavdienloemhgackbsesnsdpceghbachlyjpgafzdngronpabkheftfxhgeyrtdpnbgsmshglfoycsfylntpsohdcxbkfyndgyplolpkosdtbkcmdadyamincymdwnbsfrloglasmhwkrylkpklthttdzeoytpsoiajpihjktpsoaxoyadtpsojyjojpjlkoihjthsjtiaihdpioihjtihjphsjyjljpoytpsoisjtihksjydpjkihjstpsoadoytpsoinjpjtiodpjkjyhsjyihtpsohdcxiozeaaynkihyayjldaihcpwmolbdlapdlofhpfhlonuyaoktbbemcajtstjynelnoytpsoiejkihihietpsohdcxdlwzfnkkeylnuyrtbyqdsgytbtnlcskkylghclndehammekpaskbjsgyndahldjyoybstpsotansgmhdcxtojzpkgrtpoxseflttuyhpeemtttaakkjpcmieksdkiasnzsswiokgsgmujstedmoyaylstpsotansgylftanshfhdcxfwkeryktoncxzmaamnfgtpdybkwywlcywdrnvtceadlgtandmuahjnrezsuyaatotansgrhdcxssaakgiojebwdnolpdnswtsfzsrszsbtuepmlsdifeckckfdstlgbttersglwmbdoycsfncsfglfoycsfptpsotansgtlftansgohdcxcpvlsnwdrefscshyjemoltwydmvlmsskhtbgkbuecnpydsetttcamnfzmhoewepftansgehdcxdppsgaatpedsbzpllurtndhtmkmssnsfwkflytascsaeroaomkwzfwolglkghdweoybstpsotansgmhdcxftwecetnptptnydmoylokiwzteckleolbtaoftmsjlhdrtlffpdmtdmsjeglwtluwysfcnsr",
+            "ur:envelope/lftpsojnghihjkjycxfejtkoihjzjljoihoycsfztpsotngdgmgwhflfaohdftlrcydyoxwfwkolcnnswdzstyimctlyteehynhkckjynysthkdestnlutfmbshppmgmlsnesggltpspqzpfeemehlssgturbtkkfgtavawnwpfmkbkginjzkehgyt",
+        ];
+
+        let ur_strings: Vec<String> =
+            fixtures.iter().map(|s| s.to_string()).collect();
+
+        // Validate with --warn flag since these are single marks without
+        // genesis
+        let (success, output) = run_validate_command(&ur_strings, true);
+
+        assert!(
+            success,
+            "Validation should succeed for envelope fixtures. Output:\n{}",
+            output
+        );
+
+        // Check that output contains expected information
+        assert!(
+            output.contains("Total marks: 2"),
+            "Expected 2 distinct chains (ur:provenance and ur:envelope share same mark). Output:\n{}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_validate_direct_provenance_ur() {
+        // Test just the direct ur:provenance fixture
+        let ur_string = "ur:provenance/lfaohdftlrcydyoxwfwkolcnnswdzstyimctlyteehynhkckjynysthkdestnlutfmbshppmgmlsnesggltpspqzpfeemehlssgturbtkkfgtavawnwpfmkbkginlyisecvt";
+
+        let (success, _output) =
+            run_validate_command(&[ur_string.to_string()], true);
+
+        assert!(
+            success,
+            "Validation should succeed for direct provenance UR"
+        );
+    }
+
+    #[test]
+    fn test_validate_xid_with_provenance() {
+        // Test just the ur:xid fixture
+        let ur_string = "ur:xid/tpsplstpsotanshdhdcxwsnyfhfdsgrtvyveptftfggdoeaaknldwmbyprvawebztkbyurinvlnltihfknbeoycsfzlftpsotngdgmgwhflfaxhdimbkfyndgyplolpkosdtbkcmdadyamincymdwnbsfrloglasmhwkrylkpklthttdzeecjtztjkvynnfsgadrhebdzswlinttsovtbdynrnotenzsflwzhlhfsrkewsehhkhhbnaseydtbkgavdienloemhgackbsesnsdpceghbachlyjpgafzdngronpabkheftfxhgeyrtdpnbgsmshglfoycsfylntpsohdcxbkfyndgyplolpkosdtbkcmdadyamincymdwnbsfrloglasmhwkrylkpklthttdzeoytpsoiajpihjktpsoaxoyadtpsojyjojpjlkoihjthsjtiaihdpioihjtihjphsjyjljpoytpsoisjtihksjydpjkihjstpsoadoytpsoinjpjtiodpjkjyhsjyihtpsohdcxiozeaaynkihyayjldaihcpwmolbdlapdlofhpfhlonuyaoktbbemcajtstjynelnoytpsoiejkihihietpsohdcxdlwzfnkkeylnuyrtbyqdsgytbtnlcskkylghclndehammekpaskbjsgyndahldjyoybstpsotansgmhdcxtojzpkgrtpoxseflttuyhpeemtttaakkjpcmieksdkiasnzsswiokgsgmujstedmoyaylstpsotansgylftanshfhdcxfwkeryktoncxzmaamnfgtpdybkwywlcywdrnvtceadlgtandmuahjnrezsuyaatotansgrhdcxssaakgiojebwdnolpdnswtsfzsrszsbtuepmlsdifeckckfdstlgbttersglwmbdoycsfncsfglfoycsfptpsotansgtlftansgohdcxcpvlsnwdrefscshyjemoltwydmvlmsskhtbgkbuecnpydsetttcamnfzmhoewepftansgehdcxdppsgaatpedsbzpllurtndhtmkmssnsfwkflytascsaeroaomkwzfwolglkghdweoybstpsotansgmhdcxftwecetnptptnydmoylokiwzteckleolbtaoftmsjlhdrtlffpdmtdmsjeglwtluwysfcnsr";
+
+        let (success, _output) =
+            run_validate_command(&[ur_string.to_string()], true);
+
+        assert!(success, "Validation should succeed for XID with provenance");
+    }
+
+    #[test]
+    fn test_validate_envelope_with_provenance() {
+        // Test just the ur:envelope fixture
+        let ur_string = "ur:envelope/lftpsojnghihjkjycxfejtkoihjzjljoihoycsfztpsotngdgmgwhflfaohdftlrcydyoxwfwkolcnnswdzstyimctlyteehynhkckjynysthkdestnlutfmbshppmgmlsnesggltpspqzpfeemehlssgturbtkkfgtavawnwpfmkbkginjzkehgyt";
+
+        let (success, _output) =
+            run_validate_command(&[ur_string.to_string()], true);
+
+        assert!(
+            success,
+            "Validation should succeed for envelope with provenance"
+        );
+    }
+
+    #[test]
+    fn test_validate_envelope_without_provenance_fails() {
+        // Create an envelope without a provenance assertion - should fail
+        let ur_string = "ur:envelope/tpsotpsojnghihjkjycxfejtkohsjljpcxjyhsjljptpsoioihcxfejtihjyisihjkjpiehsjyjlcxjyhsjljpaatpsojojyhsjyjljtfloxlrashhbdcx";
+
+        let (success, _output) =
+            run_validate_command(&[ur_string.to_string()], false);
+
+        assert!(
+            !success,
+            "Validation should fail for envelope without provenance assertion"
+        );
     }
 }

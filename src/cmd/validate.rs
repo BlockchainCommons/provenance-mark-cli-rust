@@ -1,7 +1,8 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::{Result, bail};
-use bc_ur::URDecodable;
+use bc_envelope::prelude::*;
+use bc_ur::UR;
 use clap::{Args, ValueEnum};
 use provenance_mark::{
     ProvenanceMark, ProvenanceMarkInfo, ValidationReportFormat,
@@ -78,17 +79,111 @@ impl CommandArgs {
     ) -> Result<Vec<ProvenanceMark>> {
         let mut marks = Vec::new();
         for ur_string in ur_strings {
-            let mark = ProvenanceMark::from_ur_string(ur_string.trim())
-                .map_err(|e| {
-                    anyhow::anyhow!(
-                        "Failed to parse provenance mark from '{}': {}",
-                        ur_string,
-                        e
-                    )
-                })?;
+            let mark = self.extract_provenance_mark(ur_string.trim())?;
             marks.push(mark);
         }
         Ok(marks)
+    }
+
+    /// Extract a ProvenanceMark from a UR string.
+    ///
+    /// Supports three types of URs:
+    /// 1. `ur:provenance` - Direct provenance mark
+    /// 2. `ur:envelope` - Envelope with a 'provenance' assertion
+    /// 3. Any other UR type - Attempts to decode CBOR as an envelope
+    fn extract_provenance_mark(
+        &self,
+        ur_string: &str,
+    ) -> Result<ProvenanceMark> {
+        // Parse the UR to get its type and CBOR
+        let ur = UR::from_ur_string(ur_string).map_err(|e| {
+            anyhow::anyhow!("Failed to parse UR '{}': {}", ur_string, e)
+        })?;
+
+        let ur_type = ur.ur_type_str();
+        let cbor = ur.cbor();
+
+        // Case 1: Direct provenance mark
+        // URs don't include the CBOR tag in their encoded format, so we use
+        // from_untagged_cbor
+        if ur_type == "provenance" {
+            return ProvenanceMark::from_untagged_cbor(cbor).map_err(|e| {
+                anyhow::anyhow!(
+                    "Failed to decode provenance mark from '{}': {}",
+                    ur_string,
+                    e
+                )
+            });
+        }
+
+        // Case 2 & 3: Try to decode CBOR as an envelope
+        let envelope = Envelope::from_untagged_cbor(cbor.clone()).map_err(|e| {
+            anyhow::anyhow!(
+                "UR type '{}' is not 'provenance', and CBOR is not decodable as an envelope: {}",
+                ur_type,
+                e
+            )
+        })?;
+
+        // Extract the provenance mark from the envelope
+        self.extract_provenance_mark_from_envelope(&envelope, ur_string)
+    }
+
+    /// Extract a ProvenanceMark from an Envelope.
+    ///
+    /// The envelope must contain exactly one 'provenance' assertion,
+    /// and the object subject of that assertion must be a ProvenanceMark.
+    fn extract_provenance_mark_from_envelope(
+        &self,
+        envelope: &Envelope,
+        ur_string: &str,
+    ) -> Result<ProvenanceMark> {
+        // If the envelope is wrapped, unwrap it to get to the actual content
+        let envelope = if envelope.is_wrapped() {
+            match envelope.case() {
+                EnvelopeCase::Wrapped { envelope, .. } => envelope.clone(),
+                _ => envelope.clone(),
+            }
+        } else {
+            envelope.clone()
+        };
+
+        // Find all assertions with the 'provenance' predicate
+        let provenance_assertions =
+            envelope.assertions_with_predicate(known_values::PROVENANCE);
+
+        // Verify exactly one provenance assertion exists
+        if provenance_assertions.is_empty() {
+            bail!(
+                "Envelope in '{}' does not contain a 'provenance' assertion",
+                ur_string
+            );
+        }
+        if provenance_assertions.len() > 1 {
+            bail!(
+                "Envelope in '{}' contains {} 'provenance' assertions, expected exactly one",
+                ur_string,
+                provenance_assertions.len()
+            );
+        }
+
+        // Get the object of the provenance assertion
+        let provenance_assertion = &provenance_assertions[0];
+        let object_envelope = provenance_assertion.as_object()
+            .ok_or_else(|| anyhow::anyhow!(
+                "Failed to extract object from provenance assertion in '{}'",
+                ur_string
+            ))?;
+
+        // The object should be decodable as a ProvenanceMark.
+        // ProvenanceMark::try_from(Envelope) will extract the subject and
+        // decode it.
+        ProvenanceMark::try_from(object_envelope)
+            .map_err(|e| anyhow::anyhow!(
+                "Failed to decode ProvenanceMark from provenance assertion in '{}': {}",
+                ur_string,
+                e
+            ))
     }
 
     fn load_marks_from_dir(
