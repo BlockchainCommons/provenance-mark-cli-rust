@@ -167,8 +167,12 @@ The `provenance next` command is used to generate the next mark in a chain.
 
 - The path to the chain's directory as an argument is required.
 - The `--comment` option can be used to provide a comment for the new mark. (default: `Blank.`)
+- The `--format` option controls output format: `markdown` (default), `ur`, or `json`.
+- The `--quiet` option suppresses status messages, showing only the mark data.
 
 **NOTE:** Once a mark has been generated, the `generator.json` file is updated to the next sequence number and the random number generator's state is updated. The tool does not provide a way to roll back to a previous state, so if you want to experiment with generating the same mark multiple times, you should back up the `generator.json` file first, or consider using Git to manage the chain directory (in a private repo!)
+
+### Default Output (Markdown)
 
 ```bash
 provenance next mychain --comment "My cool new work I want to be tied to the chain."
@@ -188,6 +192,53 @@ provenance next mychain --comment "My cool new work I want to be tied to the cha
 │ My cool new work I want to be tied to the chain.
 ```
 
+### UR Output
+
+The `--format ur` option outputs only the provenance mark UR, suitable for piping to other tools or embedding in scripts:
+
+```bash
+provenance next mychain --comment "Automated build" --format ur
+
+│ Mark 2 written to: mychain/marks/mark-2.json
+│ ur:provenance/lfaohdftfeenaadsrhghbdmukpzevorevdndfnecpdkschgsmdjknsyabzuetojnbnckprryrhpstpbkkehdmslkplhfptrhgmhsndtpjsgrwmsglnladlndvlfemdfhsstp
+```
+
+### JSON Output
+
+The `--format json` option provides structured data for programmatic access:
+
+```bash
+provenance next mychain --comment "Release v1.0" --format json
+
+│ Mark 3 written to: mychain/marks/mark-3.json
+│ {
+│   "ur": "ur:provenance/lfaohdftiegtjeiehkndyldrbzrhrsfdaoessfmuaaweeomuadnehfrtgelahhseiaaycmdarszopdzedelutebklasardfddibgjklngeistbwecaimpsuokshshdrfzssb",
+│   "bytewords": "🅟 FLAP GRAY FACT LOUD",
+│   "bytemoji": "🅟 🍉 🥐 👀 🚫",
+│   "comment": "Release v1.0",
+│   "mark": {
+│     "seq": 3,
+│     "date": "2025-11-12T07:49:18Z",
+│     "res": 2,
+│     "chain_id": "JksfJNSDpXkgZXtVZSTWcA==",
+│     "key": "ZE1rZFmb9yoVub9IAjnMkw==",
+│     "hash": "QVE6iQX9+1HI9dk85RDVKQ=="
+│   }
+│ }
+```
+
+### Quiet Mode
+
+The `--quiet` option suppresses the status message, outputting only the mark data. This is especially useful in scripts:
+
+```bash
+provenance next mychain --comment "CI build" --format ur --quiet
+
+│ ur:provenance/lfaohdfthgidwttblefyidgeltprdebtwfoefybwsomuynrfuehkjploykiepawfihtnenesjlfrrdiymkzmutsbfzuyosfslftnwyftmdwphddiwmcaatluhnmefsdwvwfg
+```
+
+### Updated Directory Structure
+
 The `generator.json` file is updated, and the new mark is written as a new file to the `marks` directory.
 
 ```bash
@@ -202,7 +253,7 @@ tree mychain
 
 ## Validating Marks
 
-The `provenance validate` command is used to validate one or more provenance marks. It accepts one or more `ur:provenance` URIs as arguments and checks them for integrity issues.
+The `provenance validate` command validates one or more provenance marks for integrity and chain continuity. It accepts provenance mark URs as arguments or can validate an entire chain directory.
 
 The validator checks for:
 - **Duplicates**: Exact duplicate marks in the input
@@ -211,13 +262,23 @@ The validator checks for:
 - **Multiple chains**: Whether marks belong to different chains
 - **Sequence gaps**: Missing marks in the chain
 
-### Basic Usage
+### Validating from URIs
 
 To validate marks, provide their URIs as arguments:
 
 ```bash
-provenance validate ur:provenance/... ur:provenance/... ...
+provenance validate ur:provenance/lfaohdftdsgrctdktylsonkkcxihkggoihdktbjovwkeztpdstfggdctqddlwnecaadyktfefnfxkgcyhlqddsvdnsstdejsbzaabzgegmjejoferpiavarovyfsinfgkpny ur:provenance/lfaohdftchcegumkhlsecwurldqdsomdcmhhwzeykiimplprinaxamvlsghlwlgdihdinbrkdabamnztbbgdvakpsbaapldykovddtmhftfshtdmvyesonsstkltldtliefl ur:provenance/lfaohdftmhktonjtknetistaatdtwlpkhhceuygelrrekooldnmntatbwtyllusgeyswzowztklbtkztskmugutpjpntwdwefzhtcapekpgtwslgtpaouegebartdilnkiam
 ```
+
+### Validating from a Chain Directory
+
+The `--dir` option validates all marks in a chain directory:
+
+```bash
+provenance validate --dir mychain
+```
+
+This is convenient for validating an entire chain without manually extracting URIs from each mark file.
 
 ### Exit Codes and Behavior
 
@@ -226,24 +287,32 @@ By default, the `validate` command:
 - **Exits with code 1** (failure) if any issues are detected
 - **Produces no output** for perfect chains (following the Unix philosophy of silence on success)
 
-### Reporting
+Example of a successful validation (no output):
 
-The validator only reports "interesting" information:
-- A single contiguous chain of well-formed marks with no issues produces **no output**
-- Any exceptional states (duplicates, gaps, multiple chains, missing genesis) are reported
-
-Example output for marks with a gap:
-
+```bash
+provenance validate --dir mychain
 ```
-Error: Validation failed with issues:
-Total marks: 4
-Chains: 1
 
-Chain 1: 630dcd29
-  0: 8fca2ff8 (genesis mark)
-  1: 11cdf67d
-  3: 11375c74 (gap: 2 missing)
-  4: 85240945
+(No output; exit code 0)
+
+### Detecting Issues
+
+The validator reports "interesting" information when issues are detected. A single contiguous chain of well-formed marks with no issues produces no output, while any exceptional states (duplicates, gaps, multiple chains, missing genesis) are reported.
+
+#### Example: Gap in Chain
+
+Validating marks with a missing sequence number:
+
+```bash
+provenance validate ur:provenance/lfaohdftdsgrctdktylsonkkcxihkggoihdktbjovwkeztpdstfggdctqddlwnecaadyktfefnfxkgcyhlqddsvdnsstdejsbzaabzgegmjejoferpiavarovyfsinfgkpny ur:provenance/lfaohdftmhktonjtknetistaatdtwlpkhhceuygelrrekooldnmntatbwtyllusgeyswzowztklbtkztskmugutpjpntwdwefzhtcapekpgtwslgtpaouegebartdilnkiam
+
+│ Error: Validation failed with issues:
+│ Total marks: 2
+│ Chains: 1
+│
+│ Chain 1: 264b1f24
+│   0: 13cfd320 (genesis mark)
+│   2: f2ab17fc (gap: 1 missing)
 ```
 
 Each mark is displayed with its sequence number and short identifier (first 4 bytes of hash). Issues are shown inline as annotations:
@@ -257,13 +326,27 @@ Each mark is displayed with its sequence number and short identifier (first 4 by
 The `--warn` flag allows validation to succeed even when issues are detected:
 
 ```bash
-provenance validate --warn ur:provenance/... ur:provenance/...
+provenance validate --warn ur:provenance/lfaohdftdsgrctdktylsonkkcxihkggoihdktbjovwkeztpdstfggdctqddlwnecaadyktfefnfxkgcyhlqddsvdnsstdejsbzaabzgegmjejoferpiavarovyfsinfgkpny ur:provenance/lfaohdftmhktonjtknetistaatdtwlpkhhceuygelrrekooldnmntatbwtyllusgeyswzowztklbtkztskmugutpjpntwdwefzhtcapekpgtwslgtpaouegebartdilnkiam
+
+│ Total marks: 2
+│ Chains: 1
+│
+│ Chain 1: 264b1f24
+│   0: 13cfd320 (genesis mark)
+│   2: f2ab17fc (gap: 1 missing)
 ```
 
 With `--warn`:
-- Issues are reported to stdout
+- Issues are reported to stdout (without "Error:" prefix)
 - Command exits with code 0 (success)
-- Useful for auditing without causing build failures
+- Useful for auditing without causing build failures in CI/CD pipelines
+
+### Use Cases
+
+- **Publishing verification**: Validate that you have a complete chain before publishing marks
+- **Chain auditing**: Detect gaps or issues in archived mark collections
+- **CI/CD integration**: Use in build scripts to verify provenance marks (use `--warn` to avoid build failures)
+- **Cross-validation**: Verify marks received from multiple sources form a valid chain
 
 ## Printing Marks
 
@@ -309,6 +392,8 @@ provenance print mychain
 
 ### 0.6.0, October 1, 2025
 
+- Add `validate` subcommand for checking provenance mark integrity.
+- Add `--dir` option to `validate` subcommand for validating entire chain directories.
 - Add `--quiet` and `--format` options to `next` subcommand.
 
 ### 0.5.0, September 29, 2025
