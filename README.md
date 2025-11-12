@@ -444,11 +444,12 @@ provenance print mychain
 
 ## Version History
 
-### 0.6.0, October 1, 2025
+### 0.6.0, November 12, 2025
 
-- Add `validate` subcommand for checking provenance mark integrity.
-- Add `--dir` option to `validate` subcommand for validating entire chain directories.
-- Add `--quiet` and `--format` options to `next` subcommand.
+- Add validate subcommand for validating provenance mark chains.
+- Add --quiet and --format options to next subcommand.
+- Update documentation.
+- Align to dependencies.
 
 ### 0.5.0, September 29, 2025
 
