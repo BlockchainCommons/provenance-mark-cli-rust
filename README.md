@@ -262,9 +262,9 @@ The validator checks for:
 - **Multiple chains**: Whether marks belong to different chains
 - **Sequence gaps**: Missing marks in the chain
 
-### Validating from URIs
+### Validating from URs
 
-To validate marks, provide their URIs as arguments:
+To validate marks, provide their URs as arguments:
 
 ```bash
 provenance validate ur:provenance/lfaohdftdsgrctdktylsonkkcxihkggoihdktbjovwkeztpdstfggdctqddlwnecaadyktfefnfxkgcyhlqddsvdnsstdejsbzaabzgegmjejoferpiavarovyfsinfgkpny ur:provenance/lfaohdftchcegumkhlsecwurldqdsomdcmhhwzeykiimplprinaxamvlsghlwlgdihdinbrkdabamnztbbgdvakpsbaapldykovddtmhftfshtdmvyesonsstkltldtliefl ur:provenance/lfaohdftmhktonjtknetistaatdtwlpkhhceuygelrrekooldnmntatbwtyllusgeyswzowztklbtkztskmugutpjpntwdwefzhtcapekpgtwslgtpaouegebartdilnkiam
@@ -278,7 +278,7 @@ The `--dir` option validates all marks in a chain directory:
 provenance validate --dir mychain
 ```
 
-This is convenient for validating an entire chain without manually extracting URIs from each mark file.
+This is convenient for validating an entire chain without manually extracting URs from each mark file.
 
 ### Exit Codes and Behavior
 
