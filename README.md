@@ -348,6 +348,60 @@ With `--warn`:
 - **CI/CD integration**: Use in build scripts to verify provenance marks (use `--warn` to avoid build failures)
 - **Cross-validation**: Verify marks received from multiple sources form a valid chain
 
+### Validating Envelope-Wrapped Provenance Marks
+
+The `validate` command can accept **any UR type** whose CBOR payload contains a [Gordian Envelope](https://github.com/BlockchainCommons/BCSwiftEnvelope) with a `'provenance'` assertion. This includes:
+
+- `ur:provenance` - Direct provenance marks
+- `ur:envelope` - Generic envelopes with provenance assertions
+- `ur:xid` - XID Documents with provenance marks
+- Any other UR type that encodes an envelope containing a provenance mark
+
+This makes it easy to validate provenance marks that are embedded in other data structures without extracting them first.
+
+#### Example: Validating XID Documents
+
+[XID Documents](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-010-xid.md) can include provenance marks to track their revision history. You can create and validate a chain of XID documents using the `envelope` tool:
+
+```bash
+# Generate a private key
+PRVKEYS=$(envelope generate prvkeys)
+
+# Create XID with genesis provenance mark
+XID0=$(envelope xid new $PRVKEYS --generator include --date 2025-01-15)
+
+# Advance to create mark 1
+XID1=$(envelope xid provenance next --date 2025-01-20 $XID0)
+
+# Advance to create mark 2
+XID2=$(envelope xid provenance next --date 2025-01-25 $XID1)
+
+# Validate the complete chain
+provenance validate $XID0 $XID1 $XID2
+
+│ (No output; exit code 0)
+```
+
+The validator extracts the provenance marks from each XID document's `'provenance'` assertion and validates them as a chain.
+
+#### Detecting Issues in Envelope-Wrapped Marks
+
+The validator detects issues in envelope-wrapped marks the same way as direct marks:
+
+```bash
+# Validate with a gap (skipping XID1)
+provenance validate --warn $XID0 $XID2
+
+│ Total marks: 2
+│ Chains: 1
+│
+│ Chain 1: 42740037
+│   0: fe88b0d1 (genesis mark)
+│   2: 03668f98 (gap: 1 missing)
+```
+
+This flexibility allows provenance marks to be embedded in various document types while maintaining validation capability. See the [`envelope xid` documentation](https://github.com/BlockchainCommons/bc-envelope-cli/blob/master/docs/XID.md#working-with-provenance-marks) for more details on working with provenance marks in XID documents.
+
 ## Printing Marks
 
 The `provenance print` command is used to print one or more marks from a chain. It requires the path to the chain's directory as an argument.
