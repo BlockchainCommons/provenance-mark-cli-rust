@@ -371,11 +371,11 @@ mod quartile_directory_workflow {
         );
 
         // Step 2: Generate three additional marks using the 'next' subcommand
-        // Step 2: Generate three additional marks using the 'next' subcommand
         // with sequential dates
         for i in 1..=3 {
             cargo_bin_cmd!("provenance")
                 .arg("next")
+                .arg(&chain_path)
                 .arg("--date")
                 .arg(format!("2023-06-{}T12:00:00Z", 20 + i))
                 .arg("--comment")
@@ -388,6 +388,8 @@ mod quartile_directory_workflow {
         // Step 3: Validate all marks in the directory using 'validate --dir'
         let validate_output = cargo_bin_cmd!("provenance")
             .arg("validate")
+            .arg("--dir")
+            .arg(&chain_path)
             .assert()
             .success()
             .get_output()
