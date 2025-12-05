@@ -96,7 +96,7 @@ impl crate::exec::Exec for CommandArgs {
             };
 
         // Generate the genesis mark.
-        let date = self.date.clone().unwrap_or_else(Date::now);
+        let date = self.date.unwrap_or_else(Date::now);
         let info = self.info.to_cbor()?;
         let mark = match info {
             Some(info_cbor) => generator.next(date, Some(info_cbor)),

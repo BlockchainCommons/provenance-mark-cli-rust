@@ -25,15 +25,15 @@ name = "provenance"
 path = "src/main.rs"
 
 [dependencies]
-provenance-mark = "^0.16.0"
-dcbor = "^0.23.3"
-bc-ur = "^0.16.0"
-bc-tags = "^0.9.0"
-bc-components = "^0.28.0"
-bc-envelope = { version = "^0.37.0", path = "../bc-envelope", features = [
+provenance-mark = "^0.17.0"
+dcbor = "^0.24.0"
+bc-ur = "^0.17.0"
+bc-tags = "^0.10.0"
+bc-components = "^0.29.0"
+bc-envelope = { version = "^0.38.0", path = "../bc-envelope", features = [
     "known_value",
 ] }
-known-values = { version = "^0.11.0", path = "../known-values" }
+known-values = { version = "^0.12.0", path = "../known-values" }
 hex = "^0.4.3"
 base64 = "^0.22.0"
 
