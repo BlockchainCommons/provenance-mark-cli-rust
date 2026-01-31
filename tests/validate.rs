@@ -161,6 +161,7 @@ mod validate_command {
         // Should fail with gap report
         assert!(!success, "Command should fail with gap");
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_actual_expected!(output.trim(), indoc! {r#"
             Error: Validation failed with issues:
@@ -192,6 +193,7 @@ mod validate_command {
         // Should succeed with --warn flag
         assert!(success, "Command should succeed with --warn flag");
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_actual_expected!(output.trim(), indoc! {r#"
             Total marks: 4
@@ -219,6 +221,7 @@ mod validate_command {
         // Should fail (multiple chains is an issue)
         assert!(!success, "Command should fail with multiple chains");
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_actual_expected!(output.trim(), indoc! {r#"
             Error: Validation failed with issues:
@@ -250,6 +253,7 @@ mod validate_command {
         // Should fail (missing genesis)
         assert!(!success, "Command should fail with missing genesis");
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_actual_expected!(output.trim(), indoc! {r#"
             Error: Validation failed with issues:
@@ -297,6 +301,7 @@ mod validate_command {
         // Should fail (multiple sequences)
         assert!(!success, "Command should fail with multiple sequences");
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_actual_expected!(output.trim(), indoc! {r#"
             Error: Validation failed with issues:
@@ -324,6 +329,7 @@ mod validate_command {
 
         assert!(success, "Command should succeed with --warn flag");
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_actual_expected!(output.trim(), indoc! {r#"
             Total marks: 3
