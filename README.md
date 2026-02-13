@@ -446,6 +446,16 @@ provenance print mychain
 
 ## Version History
 
+### 0.7.0, February 13, 2026
+
+- Handle wrapped/signed envelopes in provenance validation by iteratively unwrapping layers until a 'provenance' assertion is found.
+- Remove unnecessary `.clone()` calls on `Date` in `new` and `next` commands.
+- Add tests for validating signed envelopes and signed XID-like envelopes with provenance marks.
+- Migrate test helpers from `AssertCommand::cargo_bin().unwrap()` to `cargo_bin_cmd!()` macro.
+- Add `expected-text-output-rubric:` comments to test assertions.
+- Document wrapped envelope unwrapping behavior in README.
+- Align to workspace dependencies (all cross minor boundaries).
+
 ### 0.6.0, November 12, 2025
 
 - Add validate subcommand for validating provenance mark chains.
