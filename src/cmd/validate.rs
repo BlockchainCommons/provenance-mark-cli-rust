@@ -131,59 +131,60 @@ impl CommandArgs {
 
     /// Extract a ProvenanceMark from an Envelope.
     ///
-    /// The envelope must contain exactly one 'provenance' assertion,
-    /// and the object subject of that assertion must be a ProvenanceMark.
+    /// The envelope must contain exactly one 'provenance' assertion (possibly
+    /// inside one or more wrapper layers), and the object subject of that
+    /// assertion must be a ProvenanceMark.
     fn extract_provenance_mark_from_envelope(
         &self,
         envelope: &Envelope,
         ur_string: &str,
     ) -> Result<ProvenanceMark> {
-        // If the envelope is wrapped, unwrap it to get to the actual content
-        let envelope = if envelope.is_wrapped() {
-            match envelope.case() {
-                EnvelopeCase::Wrapped { envelope, .. } => envelope.clone(),
-                _ => envelope.clone(),
+        let mut current = envelope.clone();
+
+        loop {
+            // Find all assertions with the 'provenance' predicate at this
+            // level.
+            let provenance_assertions =
+                current.assertions_with_predicate(known_values::PROVENANCE);
+
+            // Verify exactly one provenance assertion exists.
+            if provenance_assertions.len() > 1 {
+                bail!(
+                    "Envelope in '{}' contains {} 'provenance' assertions, expected exactly one",
+                    ur_string,
+                    provenance_assertions.len()
+                );
             }
-        } else {
-            envelope.clone()
-        };
+            if let Some(provenance_assertion) = provenance_assertions.first() {
+                // Get the object of the provenance assertion.
+                let object_envelope = provenance_assertion.as_object()
+                    .ok_or_else(|| anyhow::anyhow!(
+                        "Failed to extract object from provenance assertion in '{}'",
+                        ur_string
+                    ))?;
 
-        // Find all assertions with the 'provenance' predicate
-        let provenance_assertions =
-            envelope.assertions_with_predicate(known_values::PROVENANCE);
+                // The object should be decodable as a ProvenanceMark.
+                // ProvenanceMark::try_from(Envelope) will extract the subject
+                // and decode it.
+                return ProvenanceMark::try_from(object_envelope).map_err(|e| anyhow::anyhow!(
+                    "Failed to decode ProvenanceMark from provenance assertion in '{}': {}",
+                    ur_string,
+                    e
+                ));
+            }
 
-        // Verify exactly one provenance assertion exists
-        if provenance_assertions.is_empty() {
-            bail!(
-                "Envelope in '{}' does not contain a 'provenance' assertion",
-                ur_string
-            );
+            // No provenance at this level. If this is a wrapper around a
+            // signed/content envelope, strip one layer and try again.
+            match current.try_unwrap() {
+                Ok(unwrapped) => current = unwrapped,
+                Err(_) => {
+                    bail!(
+                        "Envelope in '{}' does not contain a 'provenance' assertion",
+                        ur_string
+                    );
+                }
+            }
         }
-        if provenance_assertions.len() > 1 {
-            bail!(
-                "Envelope in '{}' contains {} 'provenance' assertions, expected exactly one",
-                ur_string,
-                provenance_assertions.len()
-            );
-        }
-
-        // Get the object of the provenance assertion
-        let provenance_assertion = &provenance_assertions[0];
-        let object_envelope = provenance_assertion.as_object()
-            .ok_or_else(|| anyhow::anyhow!(
-                "Failed to extract object from provenance assertion in '{}'",
-                ur_string
-            ))?;
-
-        // The object should be decodable as a ProvenanceMark.
-        // ProvenanceMark::try_from(Envelope) will extract the subject and
-        // decode it.
-        ProvenanceMark::try_from(object_envelope)
-            .map_err(|e| anyhow::anyhow!(
-                "Failed to decode ProvenanceMark from provenance assertion in '{}': {}",
-                ur_string,
-                e
-            ))
     }
 
     fn load_marks_from_dir(

@@ -359,6 +359,8 @@ The `validate` command can accept **any UR type** whose CBOR payload contains a 
 
 This makes it easy to validate provenance marks that are embedded in other data structures without extracting them first.
 
+If an envelope is wrapped (for example, signed with outer assertions), `validate` will transparently unwrap layers until it finds the `'provenance'` assertion.
+
 #### Example: Validating XID Documents
 
 [XID Documents](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-010-xid.md) can include provenance marks to track their revision history. You can create and validate a chain of XID documents using the `envelope` tool:

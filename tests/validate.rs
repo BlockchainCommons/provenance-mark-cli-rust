@@ -1,10 +1,12 @@
 use std::process::Command;
 
 use assert_cmd::cargo::cargo_bin_cmd;
-use bc_ur::UREncodable;
+use bc_envelope::prelude::*;
+use bc_ur::{UR, UREncodable};
 use chrono::TimeZone;
-use dcbor::Date;
+use dcbor::prelude::CBORTaggedEncodable;
 use indoc::indoc;
+use known_values::PROVENANCE;
 use provenance_mark::{
     ProvenanceMark, ProvenanceMarkGenerator, ProvenanceMarkResolution,
 };
@@ -66,6 +68,16 @@ fn create_test_marks(
 
 fn marks_to_ur_strings(marks: &[ProvenanceMark]) -> Vec<String> {
     marks.iter().map(|m| m.ur().to_string()).collect()
+}
+
+fn wrapped_mark_ur(
+    mark: &ProvenanceMark,
+    ur_type: &str,
+) -> anyhow::Result<String> {
+    let inner =
+        Envelope::new("fixture").add_assertion(PROVENANCE, mark.clone());
+    let signed_like = inner.wrap().add_assertion("signed", "fixture-signature");
+    Ok(UR::new(ur_type, signed_like.untagged_cbor())?.to_string())
 }
 
 fn run_validate_command(ur_strings: &[String], warn: bool) -> (bool, String) {
@@ -470,6 +482,41 @@ mod quartile_directory_workflow {
             run_validate_command(&[ur_string.to_string()], true);
 
         assert!(success, "Validation should succeed for XID with provenance");
+    }
+
+    #[test]
+    fn test_validate_signed_envelope_with_provenance() {
+        let mark = create_test_marks(1, ProvenanceMarkResolution::Low, "test")
+            .into_iter()
+            .next()
+            .expect("mark");
+        let ur_string =
+            wrapped_mark_ur(&mark, "envelope").expect("signed envelope ur");
+
+        let (success, _output) =
+            run_validate_command(&[ur_string.to_string()], false);
+
+        assert!(
+            success,
+            "Validation should succeed for signed envelope with provenance"
+        );
+    }
+
+    #[test]
+    fn test_validate_signed_xid_with_provenance() {
+        let mark = create_test_marks(1, ProvenanceMarkResolution::Low, "test")
+            .into_iter()
+            .next()
+            .expect("mark");
+        let ur_string = wrapped_mark_ur(&mark, "xid").expect("signed xid ur");
+
+        let (success, _output) =
+            run_validate_command(&[ur_string.to_string()], false);
+
+        assert!(
+            success,
+            "Validation should succeed for signed XID-like envelope with provenance"
+        );
     }
 
     #[test]
